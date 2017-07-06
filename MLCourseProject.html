@@ -127,17 +127,49 @@ $(document).ready(function () {
 <h2>Executive Summary</h2>
 <p>The goal of this project is to analyze the data in the WLE dataset to produce a model that predict the <strong>class</strong> variable from a subset of the other fields describing how the model was built, how cross validation was used, what is the expected out of sample error, the reasons for the choices done. The prediction model will be used to predict the 20 different test cases too.</p>
 <p>The class variable describes the exercise execution: <strong>A</strong> indicating a correct execution and the other classes indicating 4 different common errors in wheight lift. A more detailed description of the dataset can be get here <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a>.</p>
-<p>The <strong>W</strong>eight <strong>L</strong>ifting <strong>E</strong>xercises (WLE) Dataset is is licensed under the Creative Commons license (CC BY-SA) and gently made availabel by Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. as support to the articleing exercises.</p>
+<p>The <strong>W</strong>eight <strong>L</strong>ifting <strong>E</strong>xercises (WLE) Dataset is is licensed under the Creative Commons license (CC BY-SA) and gently made availabel by Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. as support to the article.</p>
 <p><em>Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.</em></p>
 </div>
-<div id="exploratory-analysis" class="section level2">
-<h2>Exploratory Analysis</h2>
+<div id="preprocessing" class="section level2">
+<h2>Preprocessing</h2>
+<p>The <strong>caret</strong> library is loaded to be used in the analysis and the working directory is set to the directory containing the downloaded data</p>
+<pre class="r"><code>setwd(&quot;/home/bompiani/Coursera/courses/08_PracticalMachineLearning/MLAssignment/&quot;)
+library(caret)</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: 'dplyr'</code></pre>
+<pre><code>## The following objects are masked from 'package:stats':
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<p>The dataset is loaded from two files and copied in two variables</p>
+<pre class="r"><code>dfTrain &lt;- read.csv(&quot;pml-training.csv&quot;)
+dfTest &lt;- read.csv(&quot;pml-testing.csv&quot;)</code></pre>
+<p>Several preprocessing activity are required to avoid problem with this dataset. To avoid problems with the sampling we’ll not consider variables with near to zero variancd</p>
+<pre class="r"><code>dfTrain &lt;- dfTrain &lt;- dfTrain[,-nearZeroVar(dfTrain)]</code></pre>
+<p>Too incomplete variables are not considered</p>
+<pre class="r"><code>dfTrain &lt;- dfTrain[, complete.cases(t(dfTrain))]</code></pre>
+<p>Some variables are tag used to identify the subject or the measure and should not be used to determinate the classe</p>
+<pre class="r"><code>dfTrain &lt;- dfTrain[, -grep(&quot;X&quot;, names(dfTrain))]
+dfTrain &lt;- dfTrain[, -grep(&quot;user_name&quot;, names(dfTrain))]</code></pre>
+<p>Some variables are used to determinate the temporal sequence in the exercises. These variables would reflect the order in the exercise execution and would determinate the class just because the exercises are executed in a specific order.</p>
+<pre class="r"><code>dfTrain &lt;- dfTrain[, -grep(&quot;timestamp&quot;, names(dfTrain))]</code></pre>
+<p>A partition in the training set is created to have a subset to use in the comparison of the models</p>
+<pre class="r"><code>set.seed(666)
+inTrain &lt;- createDataPartition(y=dfTrain$classe, p=.7, list=FALSE)
+dfTrainT &lt;- dfTrain[inTrain, ]
+dfTrainV &lt;- dfTrain[-inTrain, ]</code></pre>
+<p>The same subset of variables is selected in the test data too</p>
+<pre class="r"><code>variables &lt;- names(dfTrain)
+dfTest &lt;- dfTest[,names(dfTest) %in% variables]</code></pre>
 </div>
-<div id="quantitative-analysis" class="section level2">
-<h2>Quantitative Analysis</h2>
-</div>
-<div id="conclusions" class="section level2">
-<h2>Conclusions</h2>
+<div id="analysis" class="section level2">
+<h2>Analysis</h2>
+<p>Several predicion models are available. Some have been picked up considering the execution time too. The resulting prediction are compared and a combined model is built.</p>
 </div>
 
 

@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -22,8 +23,9 @@ The **W**eight **L**ifting **E**xercises (WLE) Dataset is is licensed under the 
 The **caret** library is loaded to be used in the analysis and the working directory is set to the directory containing the downloaded data
 
 ```{r}
-setwd("/home/bompiani/Dropbox/R/Mie Prove Machine Learning/")
+setwd("/home/bompiani/Coursera/courses/08_PracticalMachineLearning/MLAssignment/")
 library(caret)
+library(dplyr)
 ```
 
 The dataset is loaded from two files and copied in two variables
@@ -57,8 +59,8 @@ dfTrain <- dfTrain[, -grep("timestamp", names(dfTrain))]
 
 A partition in the training set is created to have a subset to use in the comparison of the models
 ```{r}
-set.seed(666)
-inTrain <- createDataPartition(y=dfTrain$classe, pated=.7, list=FALSE)
+set.seed(2740)
+inTrain <- createDataPartition(y=dfTrain$classe, p=.7, list=FALSE)
 dfTrainT <- dfTrain[inTrain, ]
 dfTrainV <- dfTrain[-inTrain, ]
 ```
@@ -66,5 +68,61 @@ dfTrainV <- dfTrain[-inTrain, ]
 The same subset of variables is selected in the test data too
 ```{r}
 variables <- names(dfTrain)
-dfTest <- dfTest[, variables ]
+dfTest <- dfTest[,names(dfTest) %in% variables]
+```
+
+## Analysis
+Several predicion models are available. Some have been picked up considering the execution time too. 
+The resulting prediction are compared and a combined model is built.
+
+### Random Tree
+```{r}
+set.seed(1332)
+fitRT <- train( classe ~ ., data = dfTrainT, method = "rpart", maxdepth=20)
+predRT <- predict( fitRT, newdata = dfTrainV )
+cmRT <- confusionMatrix(predRT, dfTrainV$classe)
+cmRT
+```
+
+### Generalized partial least square
+
+```{r}
+fitLM <- train( classe ~ ., data = dfTrainT, method = "gpls")
+predLM <- predict( fitLM, newdata = dfTrainV )
+cmLM <- confusionMatrix(predLM, dfTrainV$classe)
+cmLM
+```
+
+```{r}
+## Random Forest
+fitRF <- train( classe ~ ., data = dfTrainT, method = "rf")
+predRF <- predict( fitRF, newdata = dfTrainV )
+cmRF <- confusionMatrix(predRF, dfTrainV$classe)
+cmRF
+
+## Boosting
+fitBT <- train( classe ~ ., data = dfTrainT, method = "gbm", verbose = FALSE)
+predBT <- predict( fitBT, newdata = dfTrainV )
+cmBT <- confusionMatrix(predBT, dfTrainV$classe)
+cmBT
+
+## Linear Discriminant analysis
+fitLDA <- train( classe ~ ., data = dfTrainT, method = "lda")
+predLDA <- predict( fitLDA, newdata = dfTrainV )
+cmLDA <- confusionMatrix(predLDA, dfTrainV$classe)
+cmLDA
+
+## combinate
+predDF <- data.frame(predRF,predBT, predLDA, classe=dfTrainV$classe)
+fitComb <- train(classe ~ . , data = predDF, method="rf")
+predComb <- predict(fitComb, dfTrainV)
+cmComb <- confusionMatrix(predComb, dfTrainV$classe)
+cmComb
+
+cmRT$overall
+cmLM$overall
+cmRF$overall
+cmBT$overall
+cmLDA$overall
+cmComb$overall
 ```

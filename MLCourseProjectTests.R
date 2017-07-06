@@ -1,4 +1,4 @@
-setwd("/home/bompiani/Dropbox/R/Mie Prove Machine Learning/")
+setwd("/home/bompiani/Coursera/courses/08_PracticalMachineLearning/MLAssignment/")
 library(caret)
 
 dfTrain <- read.csv("pml-training.csv")
@@ -36,7 +36,7 @@ predRT <- predict( fitRT, newdata = dfTrainV )
 cmRT <- confusionMatrix(predRT, dfTrainV$classe)
 cmRT
 
-## Linear least square
+## Generalized partial least square
 fitLM <- train( classe ~ ., data = dfTrainT, method = "gpls")
 predLM <- predict( fitLM, newdata = dfTrainV )
 cmLM <- confusionMatrix(predLM, dfTrainV$classe)
