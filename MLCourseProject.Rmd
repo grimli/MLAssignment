@@ -1,0 +1,70 @@
+---
+title: "Machine Learning Course Project"
+author: "Edoardo Bompiani"
+date: "04 luglio 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary 
+The goal of this project is to analyze the data in the WLE dataset to produce a model that predict the **class** variable from a subset of the other fields describing how the model was built, how cross validation was used, what is  the expected out of sample error, the reasons for the choices done. The prediction model will be used to predict the 20 different test cases too.
+
+The class variable describes the exercise execution: **A** indicating a correct execution and the other classes indicating 4 different common errors in wheight lift. A more detailed description of the dataset can be get here http://groupware.les.inf.puc-rio.br/har. 
+
+The **W**eight **L**ifting **E**xercises (WLE) Dataset is is licensed under the Creative Commons license (CC BY-SA) and gently made availabel by Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. as support to the article.
+
+*Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.*
+
+## Preprocessing
+The **caret** library is loaded to be used in the analysis and the working directory is set to the directory containing the downloaded data
+
+```{r}
+setwd("/home/bompiani/Dropbox/R/Mie Prove Machine Learning/")
+library(caret)
+```
+
+The dataset is loaded from two files and copied in two variables
+```{r}
+dfTrain <- read.csv("pml-training.csv")
+dfTest <- read.csv("pml-testing.csv")
+``` 
+
+Several preprocessing activity are required to avoid problem with this dataset.
+To avoid problems with the sampling we'll not consider variables with near to zero variancd
+ 
+```{r}
+dfTrain <- dfTrain <- dfTrain[,-nearZeroVar(dfTrain)]
+```
+
+Too incomplete variables are not considered
+```{r}
+dfTrain <- dfTrain[, complete.cases(t(dfTrain))]
+```
+
+Some variables are tag used to identify the subject or the measure and should not be used to determinate the classe
+```{r}
+dfTrain <- dfTrain[, -grep("X", names(dfTrain))]
+dfTrain <- dfTrain[, -grep("user_name", names(dfTrain))]
+```
+
+Some variables are used to determinate the temporal sequence in the exercises. These variables would reflect the order in the exercise execution and would determinate the class just because the exercises are executed in a specific order.  
+```{r}
+dfTrain <- dfTrain[, -grep("timestamp", names(dfTrain))]
+```
+
+A partition in the training set is created to have a subset to use in the comparison of the models
+```{r}
+set.seed(666)
+inTrain <- createDataPartition(y=dfTrain$classe, pated=.7, list=FALSE)
+dfTrainT <- dfTrain[inTrain, ]
+dfTrainV <- dfTrain[-inTrain, ]
+```
+
+The same subset of variables is selected in the test data too
+```{r}
+variables <- names(dfTrain)
+dfTest <- dfTest[, variables ]
+```
