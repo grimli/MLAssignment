@@ -23,15 +23,31 @@ The **W**eight **L**ifting **E**xercises (WLE) Dataset is is licensed under the 
 The **caret** library is loaded to be used in the analysis and the working directory is set to the directory containing the downloaded data
 
 ```{r}
-setwd("/home/bompiani/Coursera/courses/08_PracticalMachineLearning/MLAssignment/")
 library(caret)
 library(dplyr)
 ```
 
 The dataset is loaded from two files and copied in two variables
 ```{r}
-dfTrain <- read.csv("pml-training.csv")
-dfTest <- read.csv("pml-testing.csv")
+destfile_test <- "./pml-testing.csv"
+destfile_train <- "./pml-training.csv"
+
+if(!file.exists(destfile_test)){
+    res <- tryCatch(download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+                              destfile="./data/pml-testing.csv",
+                              method="auto"),
+                error=function(e) 1)
+}
+
+if(!file.exists(destfile_train)){
+    res <- tryCatch(download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+                              destfile="./data/pml-training.csv",
+                              method="auto"),
+                error=function(e) 1)
+}
+
+dfTrain <- read.csv(destfile_train)
+dfTest <- read.csv(destfile_test)
 ``` 
 
 Several preprocessing activity are required to avoid problem with this dataset.
@@ -84,21 +100,23 @@ cmRT <- confusionMatrix(predRT, dfTrainV$classe)
 cmRT
 ```
 
-### Generalized partial least square
 
 ```{r}
-fitLM <- train( classe ~ ., data = dfTrainT, method = "gpls")
-predLM <- predict( fitLM, newdata = dfTrainV )
-cmLM <- confusionMatrix(predLM, dfTrainV$classe)
-cmLM
+### Generalized partial least square
+### not available for this verion of R
+#fitLM <- train( classe ~ ., data = dfTrainT, method = "gpls")
+#predLM <- predict( fitLM, newdata = dfTrainV )
+#cmLM <- confusionMatrix(predLM, dfTrainV$classe)
+#cmLM
 ```
 
 ```{r}
 ## Random Forest
-fitRF <- train( classe ~ ., data = dfTrainT, method = "rf")
-predRF <- predict( fitRF, newdata = dfTrainV )
-cmRF <- confusionMatrix(predRF, dfTrainV$classe)
-cmRF
+### Generalized partial least square
+#fitRF <- train( classe ~ ., data = dfTrainT, method = "rf")
+#predRF <- predict( fitRF, newdata = dfTrainV )
+#cmRF <- confusionMatrix(predRF, dfTrainV$classe)
+#cmRF
 
 ## Boosting
 fitBT <- train( classe ~ ., data = dfTrainT, method = "gbm", verbose = FALSE)
