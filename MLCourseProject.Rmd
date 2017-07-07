@@ -92,55 +92,54 @@ Several predicion models are available. Some have been picked up considering the
 The resulting prediction are compared and a combined model is built.
 
 ### Random Tree
-```{r}
+We start with Random Tree, a simple method
+```{r, cache=TRUE}
 set.seed(1332)
 fitRT <- train( classe ~ ., data = dfTrainT, method = "rpart", maxdepth=20)
 predRT <- predict( fitRT, newdata = dfTrainV )
 cmRT <- confusionMatrix(predRT, dfTrainV$classe)
 cmRT
 ```
-
-
-```{r}
-### Generalized partial least square
-### not available for this verion of R
-#fitLM <- train( classe ~ ., data = dfTrainT, method = "gpls")
-#predLM <- predict( fitLM, newdata = dfTrainV )
-#cmLM <- confusionMatrix(predLM, dfTrainV$classe)
-#cmLM
-```
-
-```{r}
-## Random Forest
-### Generalized partial least square
-#fitRF <- train( classe ~ ., data = dfTrainT, method = "rf")
-#predRF <- predict( fitRF, newdata = dfTrainV )
-#cmRF <- confusionMatrix(predRF, dfTrainV$classe)
-#cmRF
+The result, with the D Class completly indiscovered and an accuracy of 0.59  is not particularly interesting.
 
 ## Boosting
+```{r, cache=TRUE}
 fitBT <- train( classe ~ ., data = dfTrainT, method = "gbm", verbose = FALSE)
 predBT <- predict( fitBT, newdata = dfTrainV )
 cmBT <- confusionMatrix(predBT, dfTrainV$classe)
 cmBT
+```
+The Boosting method is more sofisticated and computationally requiring but gives better results with an accuracy of 0.985.
 
 ## Linear Discriminant analysis
+```{r, cache=TRUE}
 fitLDA <- train( classe ~ ., data = dfTrainT, method = "lda")
 predLDA <- predict( fitLDA, newdata = dfTrainV )
 cmLDA <- confusionMatrix(predLDA, dfTrainV$classe)
 cmLDA
-
-## combinate
-predDF <- data.frame(predRF,predBT, predLDA, classe=dfTrainV$classe)
+```
+### Combined prediction
+In this last analysis step we try to get a more accurate solution combining the previous results with the random forest method
+```{r, cache=TRUE}
+predDF <- data.frame(predBT, predLDA, predRT, classe=dfTrainV$classe)
 fitComb <- train(classe ~ . , data = predDF, method="rf")
 predComb <- predict(fitComb, dfTrainV)
 cmComb <- confusionMatrix(predComb, dfTrainV$classe)
 cmComb
+```
+### Model Comparison
+The Accuracy of the four models can be compared
+```{r, cache=TRUE}
+rbind( c("Random Tree", cmRT$overall[1]),
+    c("Boosted", cmBT$overall[1]),
+    c("Linear Discriminant", cmLDA$overall[1]),
+    c("Combined", cmComb$overall[1]))
+```
+The boosted shows better results and no real advantage is got combining this method with the other.
 
-cmRT$overall
-cmLM$overall
-cmRF$overall
-cmBT$overall
-cmLDA$overall
-cmComb$overall
+## Test dataset analysis 
+We can now apply the chosen model to the test dataset
+```{r, cache=TRUE}
+predTest <- predict(fitBT, dfTest )
+predTest
 ```
