@@ -27,7 +27,7 @@ library(caret)
 library(dplyr)
 ```
 
-The dataset is loaded from two files and copied in two variables
+The dataset is loaded from two files and copied into two variables
 ```{r}
 destfile_test <- "./pml-testing.csv"
 destfile_train <- "./pml-training.csv"
@@ -51,29 +51,29 @@ dfTest <- read.csv(destfile_test)
 ``` 
 
 Several preprocessing activity are required to avoid problem with this dataset.
-To avoid problems with the sampling we'll not consider variables with near to zero variancd
+To avoid problems with the sampling we'll not consider variables with near to zero variance. To accomplish this the caret package provide the nearZeroVar() function.
  
 ```{r}
 dfTrain <- dfTrain <- dfTrain[,-nearZeroVar(dfTrain)]
 ```
 
-Too incomplete variables are not considered
+Incomplete variables are not considered too
 ```{r}
 dfTrain <- dfTrain[, complete.cases(t(dfTrain))]
 ```
 
-Some variables are tag used to identify the subject or the measure and should not be used to determinate the classe
+Some variables are tags, used to identify the subject or the measure and should not be used to determinate the classe
 ```{r}
 dfTrain <- dfTrain[, -grep("X", names(dfTrain))]
 dfTrain <- dfTrain[, -grep("user_name", names(dfTrain))]
 ```
 
-Some variables are used to determinate the temporal sequence in the exercises. These variables would reflect the order in the exercise execution and would determinate the class just because the exercises are executed in a specific order.  
+Some variables are used to determinate the temporal sequence in the exercises. These variables would reflect the order in the exercise execution and would determinate the class just because the exercises are executed in a specific order. These variables are then excluded too  
 ```{r}
 dfTrain <- dfTrain[, -grep("timestamp", names(dfTrain))]
 ```
 
-A partition in the training set is created to have a subset to use in the comparison of the models
+A partition in the training set is created to have a subset to use in the cross validation step:
 ```{r}
 set.seed(2740)
 inTrain <- createDataPartition(y=dfTrain$classe, p=.7, list=FALSE)
@@ -89,7 +89,7 @@ dfTest <- dfTest[,names(dfTest) %in% variables]
 
 ## Analysis
 Several predicion models are available. Some have been picked up considering the execution time too. 
-The resulting prediction are compared and a combined model is built.
+The resulting prediction are used to build combined model too.
 
 ### Random Tree
 We start with Random Tree, a simple method
@@ -100,7 +100,7 @@ predRT <- predict( fitRT, newdata = dfTrainV )
 cmRT <- confusionMatrix(predRT, dfTrainV$classe)
 cmRT
 ```
-The result, with the D Class completly indiscovered and an accuracy of 0.59  is not particularly interesting.
+The results of this method, with the D Class completly undiscovered and an accuracy of 0.59, are not particularly interesting.
 
 ## Boosting
 ```{r, cache=TRUE}
@@ -109,15 +109,18 @@ predBT <- predict( fitBT, newdata = dfTrainV )
 cmBT <- confusionMatrix(predBT, dfTrainV$classe)
 cmBT
 ```
-The Boosting method is more sofisticated and computationally requiring but gives better results with an accuracy of 0.985.
+The Boosting method is more sofisticated and computationally requiring but gives much better results. This time we have got an accuracy of 0.985.
 
 ## Linear Discriminant analysis
+As final model we consider the Linear Discriminant analysis
 ```{r, cache=TRUE}
 fitLDA <- train( classe ~ ., data = dfTrainT, method = "lda")
 predLDA <- predict( fitLDA, newdata = dfTrainV )
 cmLDA <- confusionMatrix(predLDA, dfTrainV$classe)
 cmLDA
 ```
+The accuracy of this model is not as good as with the boosting method but not as bet as for the Random Tree method.
+
 ### Combined prediction
 In this last analysis step we try to get a more accurate solution combining the previous results with the random forest method
 ```{r, cache=TRUE}
@@ -127,6 +130,7 @@ predComb <- predict(fitComb, dfTrainV)
 cmComb <- confusionMatrix(predComb, dfTrainV$classe)
 cmComb
 ```
+
 ### Model Comparison
 The Accuracy of the four models can be compared
 ```{r, cache=TRUE}
